@@ -71,7 +71,7 @@ if __name__ == '__main__':
     assert  args.mode in ['e2e', 'cnn_dm', 'webnlg', 'triples', 'xsum', 'xsum_news', 'xsum_news_sport']
 
 
-
+    # E2E, WebNLG, DART -> table-to-text task
     if args.mode == 'e2e':
 
         data_dir= 'e2e'
@@ -112,7 +112,7 @@ if __name__ == '__main__':
 
         assert args.optim_prefix == 'yes'
 
-
+    # abstractive dataset on news articles
     elif args.mode == 'xsum':
         data_dir = 'xsum'
         folder_name = "xsum_models/"
@@ -245,7 +245,8 @@ if __name__ == '__main__':
 
     controlprefix = ('yes' if args.tuning_mode == 'prefixtune' else 'no')
 
-
+    # define command line
+    # training
     if args.do_train == 'yes':
         COMMANDLINE = 'python finetune.py ' \
                       '--model_name_or_path {} ' \
@@ -263,6 +264,7 @@ if __name__ == '__main__':
                       '--num_train_epochs {} '.format(OLD_MODEL, Model_FILE, data_dir, args.tuning_mode, args.preseqlen, args.label_smoothing, args.use_deep,
                                                       args.learning_rate, args.bsz, args.bsz, args.epoch)
     else:
+        # fine tuning
         if args.tuning_mode == 'finetune':
             assert args.finetune_model_path is not None
             print('loading from the finetune model {}'.format(args.finetune_model_path))
@@ -284,6 +286,7 @@ if __name__ == '__main__':
                                                           args.tuning_mode, args.preseqlen,  args.use_deep,
                                                           10, 10, args.length_pen, args.epoch)
         else:
+            # prefix-tuning
             assert args.prefix_model_path is not None
             print('loading from the prefix model {}'.format(args.prefix_model_path))
             print('loading from the main model {}'.format(OLD_MODEL))

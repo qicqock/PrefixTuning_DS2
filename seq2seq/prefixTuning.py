@@ -16,7 +16,7 @@ class PrefixTuning(PretrainedBartModel):
         self.match_n_embd = self.n_embd // self.match_n_head
 
 
-
+        # transfer config setting
         if hasattr(config, 'optim_prefix'):
             self.optim_prefix = config.optim_prefix
         else:
@@ -89,7 +89,7 @@ class PrefixTuning(PretrainedBartModel):
         else:
             self.lowdata_token = None
 
-
+        # default = task_mode : None
         if self.task_mode == 'dataless':
             self.mode_para = 1
         elif self.task_mode == 'data2text' or self.task_mode == 'triples' or self.task_mode == 'webnlg' or \
@@ -100,6 +100,7 @@ class PrefixTuning(PretrainedBartModel):
         else:
             self.mode_para = 4
 
+        # default = optim_prefix : yes
         if not self.optim_prefix:
             if self.train_weights:
                 self.wte = model_gpt2.transformer.wte
@@ -147,12 +148,13 @@ class PrefixTuning(PretrainedBartModel):
                     self.get_prompt = self.get_prompt_p1_infix
                 else:
                     self.get_prompt = self.get_prompt_p1
-        else:
+        # if optim_prefix = yes
+        else: 
             self.mode_para = 0
             print('mode_para=0, for data2text Instruction based, just optimize a set of parameters ;) ')
             print('preseqlen is {}, under the mode of optimizing prefix directly'.format(self.preseqlen))
 
-
+            #default = lowdata_token: summarize
             if self.lowdata and self.lowdata_token is not None:
                 low_data_init = 3
                 if low_data_init == 1:
@@ -188,11 +190,14 @@ class PrefixTuning(PretrainedBartModel):
                     print('IN THE LOW DATA SETTING, UNDER PARAMETRIZATION 1, low_data_init=3, '
                           'preseqlen = {} Unifying with FINETUNE'.format(self.preseqlen))
                     self.input_tokens = torch.arange(self.preseqlen).long()
+                    # make an embedding that has self.preseqlen rows and config.n_embd columns
                     self.wte = nn.Embedding(self.preseqlen, config.n_embd)
+                    # control_trans ?
                     self.control_trans = nn.Sequential(
                         nn.Linear(config.n_embd, self.mid_dim),
                         nn.Tanh(),
                         nn.Linear(self.mid_dim, config.n_layer * 2 * config.n_embd))
+                    # p5?
                     self.get_prompt = self.get_prompt_p5
 
 
@@ -201,6 +206,7 @@ class PrefixTuning(PretrainedBartModel):
 
 
             # DIFFERENT PARAMETRIZATION:
+            # Not deep prefix tuning
             elif not deep_param:
                 low_data_init = 0
                 print('UNDER PARAMETRIZATION 1')
@@ -233,13 +239,14 @@ class PrefixTuning(PretrainedBartModel):
                         nn.Linear(self.mid_dim, self.match_n_layer * 2 * self.n_embd))
 
 
-
+            # deep 1 
             else:
                 low_data_init = 0
                 print('UNDER PARAMETRIZATION DEEP 1')
 
                 self.input_tokens = torch.arange(self.preseqlen).long()
                 self.wte = nn.Embedding(self.preseqlen, self.n_embd)
+                # mid_dim
                 self.control_trans = nn.Sequential(
                     nn.Linear(self.n_embd, self.mid_dim),
                     nn.Tanh(),
@@ -290,6 +297,7 @@ class PrefixTuning(PretrainedBartModel):
             total_param += param.numel()
         print('total param is {}'.format(total_param))
 
+        # init low_data
         if low_data_init == 2:
             self.lowdata_init_train2(gpt2=model_gpt2, tokenizer=tokenizer, sample_input=sample_input)
         elif low_data_init == 3:
@@ -297,7 +305,8 @@ class PrefixTuning(PretrainedBartModel):
             self.lowdata_init_train3(gpt2=model_gpt2, sample_input=torch.LongTensor(self.lowdata_token))
 
 
-
+    # gpt2 : input of PrefixTuning class
+    # e.g. self.model = PrefixTuning(config_prefix, self.seq2seq_model)
     def lowdata_init_train1(self, gpt2, tokenizer, sample_input):
         input = tokenizer(sample_input, return_tensors='pt')
         output = gpt2(input['input_ids'].to(gpt2.device), return_dict=True, use_cache=True)

@@ -44,7 +44,6 @@ from lightning_base import BaseTransformer, add_generic_args, generic_train, Pre
 
 logger = logging.getLogger(__name__)
 
-
 class PrefixSummarizationModule(PrefixTransformer):
     mode = "summarization"
     loss_names = ["loss"]

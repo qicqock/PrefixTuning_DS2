@@ -131,6 +131,7 @@ class PrefixTransformer(pl.LightningModule):
                 setattr(self.config, p, getattr(self.hparams, p))
 
 
+        # tokenizer
         if tokenizer is None:
             self.tokenizer = AutoTokenizer.from_pretrained(
                 self.hparams.tokenizer_name if self.hparams.tokenizer_name else self.hparams.model_name_or_path,
@@ -143,6 +144,7 @@ class PrefixTransformer(pl.LightningModule):
         self.config.preseqlen = self.hparams.preseqlen
         self.config.use_prefix = True
 
+        # seq2seq model
         self.seq2seq_model_type = MODEL_MODES[mode]
         if seq2seq_model is None:
             self.seq2seq_model = BartForConditionalGeneration.from_pretrained(
@@ -155,7 +157,7 @@ class PrefixTransformer(pl.LightningModule):
             self.seq2seq_model = seq2seq_model
 
 
-
+        # prefix 
         config_prefix = AutoConfig.from_pretrained(self.hparams.model_name_or_path, cache_dir=cache_dir)
         self.model_type = config_prefix.model_type
 
@@ -183,6 +185,7 @@ class PrefixTransformer(pl.LightningModule):
 
         # print(config_prefix)
 
+        # prefix
         if self.hparams.prefixModel_name_or_path is not None:
             print('loading from {}'.format(hparams.prefixModel_name_or_path))
             self.model = PrefixTuning.from_pretrained(self.hparams.prefixModel_name_or_path,
